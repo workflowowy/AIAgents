@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lex Bot</title>
+
+  <!-- Poppins (UI, wiadomości, formularz) + fallback Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&family=Montserrat:wght@400;500&display=swap" rel="stylesheet">
+  <!-- n8n chat CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+
+  <style>
+    :root{
+      --brand-main:#AC1818;  /* główny */
+      --brand-accent:#F6EA2A;/* akcent */
+      --brand-alt:#7C1D1C;   /* hover */
+      --brand-text:#0b1020;
+      --brand-muted:#6b7280;
+      --brand-border:#d1d5db;
+      --brand-bg:#ffffff;
+
+      /* n8n widget */
+      --chat--color-primary: var(--brand-main);
+      --chat--color-secondary: var(--brand-accent);
+      --chat--color-white:#fff;
+      --chat--color-dark:#111827;
+
+      --chat--message--bot--background:#fff;
+      --chat--message--bot--color:var(--brand-text);
+      --chat--message--user--background:var(--brand-main);
+      --chat--message--user--color:#fff;
+      --chat--message--border-radius:18px;
+      --chat--message-line-height:1.6;
+
+      --chat--header--background: var(--brand-main);
+      --chat--header--color:#fff;
+
+      --chat--window--width:100%;
+      --chat--window--height:100%;
+      --chat--border-radius:18px;
+      --chat--textarea--height:52px;
+    }
+
+    *,*::before,*::after{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; background:#fff; color:var(--brand-text); }
+    body, input, button, label{ font-family:'Poppins','Montserrat',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+    #n8n-chat, #n8n-chat *{ font-family:'Poppins','Montserrat',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif !important; }
+
+    /* Launcher (prawy-dół) */
+    #chat-launcher{
+      position:fixed; right:20px; bottom:20px; z-index:10000;
+      width:64px; height:64px; border-radius:50%;
+      background:var(--brand-main); color:#fff; border:0;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 10px 24px rgba(0,0,0,.2);
+      cursor:pointer; transition:background .15s ease;
+    }
+    #chat-launcher:hover{ background:var(--brand-alt); }
+    #chat-launcher svg{ width:42px; height:42px; display:block; }
+
+/* ➜ Zielona kropka dostępności (badge) */
+#chat-launcher::after{
+  content:"";
+  position:absolute;
+  left:-0px;          /* zmień na right:-2px; jeśli ma być po prawej */
+  bottom:-0px;
+  width:16px; height:16px;
+  border-radius:50%;
+  background:#2ECC71;           /* zielony status (online) */
+  border:2px solid #fff;        /* biały ring */
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+  pointer-events:none;          /* nie blokuje kliknięcia w przycisk */
+}
+
+    /* Okno czatu */
+    #chat-modal{
+      position:fixed; right:20px; bottom:100px; z-index:9999;
+      width:420px; max-width:calc(100% - 40px); height:640px;
+      background:var(--brand-bg); border-radius:18px;
+      box-shadow:0 20px 48px rgba(0,0,0,.24);
+      display:none; flex-direction:column; overflow:hidden;
+      border:1px solid #ececec;
+    }
+
+    /* Header Lex Bot */
+    #chat-header{
+      background:var(--brand-main); color:#fff;
+      padding:8px 12px; min-height:60px;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    #brand-wrap{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .avatar{ width:36px; height:36px; border-radius:50%; background:#fff1; display:grid; place-items:center; border:2px solid #ffffff66; }
+    .avatar svg{ width:22px; height:22px; display:block; }
+    .meta{ display:flex; flex-direction:column; line-height:1.1; }
+    .bot-name{ font-family:"Segoe UI","Segoe UI Variable","Segoe UI Web",system-ui,-apple-system,Roboto,Arial,sans-serif; font-weight:700; font-size:16px; letter-spacing:.2px; }
+    .bot-sub{ font-family:"Segoe UI","Segoe UI Variable","Segoe UI Web",system-ui,-apple-system,Roboto,Arial,sans-serif; font-weight:400; font-size:12px; opacity:.95; display:flex; align-items:center; gap:6px; }
+    .online-dot{ width:10px; height:10px; border-radius:50%; background:#2ecc71; box-shadow:0 0 0 2px #ffffff55 inset; }
+
+    /* Strzałka minimalizacji: jednolite, pełne kółko na hover/focus — bez obwódki */
+    #chat-minimize{
+      background: transparent; border: 0; color:#fff; cursor: pointer;
+      width: 36px; height: 36px; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      transition: background-color .15s ease, transform .05s ease;
+      box-shadow: none;                     /* brak ringu */
+    }
+
+    #chat-minimize:hover{
+      background: var(--brand-alt) !important;  /* pełne kółko, ciemnoczerwone */
+      box-shadow: none !important;              /* zero obwódki */
+    }
+
+    #chat-minimize:focus-visible{
+      outline: none;
+      background: var(--brand-alt) !important;  /* też pełne kółko */
+      box-shadow: none !important;              /* zero obwódki */
+    }
+
+    #chat-minimize:active{
+      transform: translateY(1px);
+    }
+
+    #chat-minimize svg{
+      width: 22px; height: 22px; display: block;
+      pointer-events: none; /* klik trafia w button */
+    }
+
+
+
+
+    #chat-body{ flex:1; min-height:0; display:flex; }
+
+    /* Formularz wstępny */
+    #prechat-form{ width:100%; height:100%; padding:16px; overflow:auto; }
+    #prechat-form p.topnote{ margin:0 0 8px; font-size:13px; color:var(--brand-muted); }
+    .field{ margin-bottom:12px; }
+    .field label{ display:block; font-size:13px; margin-bottom:6px; color:#111; }
+    .field input[type="text"],
+    .field input[type="email"],
+    .field input[type="tel"]{
+      width:100%; max-width:100%; height:44px; padding:10px 12px;
+      border:1.5px solid var(--brand-border); border-radius:14px;
+      font-size:14px; background:#fff; color:var(--brand-text);
+      outline:none; transition:border-color .15s, box-shadow .15s;
+    }
+    .field input::placeholder{ color:#9ca3af; }
+    .field input:focus{ border-color:var(--brand-main); box-shadow:0 0 0 3px color-mix(in srgb, var(--brand-main) 22%, transparent); }
+
+    /* Checkbox – kwadrat 20x20, nieprzycinany, animowany */
+    .consent { display:flex; gap:12px; align-items:flex-start; font-size:13px; color:#333; }
+    .consent a { color: var(--brand-accent); text-decoration: underline; }
+
+    .consent input[type="checkbox"]{
+      appearance: none; -webkit-appearance: none;
+      width: 18px; height: 18px;
+      flex: 0 0 20px; min-width:20px; min-height:20px;
+      border: 2px solid var(--brand-border);
+      border-radius: 2px;
+      background: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      cursor: pointer; vertical-align: text-top;
+      transition: border-color .2s, background-color .2s, box-shadow .2s, transform .08s;
+      margin-top: 2px; padding: 0; line-height: 0;
+    }
+    .consent input[type="checkbox"]::before{
+      content: ""; width:12px; height:7px;
+      border-left:3px solid #fff; border-bottom:3px solid #fff;
+      transform: rotate(-45deg) scale(0); transform-origin:center;
+      transition: transform .16s ease-in-out;
+    }
+    .consent input[type="checkbox"]:hover { border-color: var(--brand-main); }
+    .consent input[type="checkbox"]:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(172,24,24,.18); border-color:var(--brand-main); }
+    .consent input[type="checkbox"]:checked{ background:var(--brand-main); border-color:var(--brand-main); }
+    .consent input[type="checkbox"]:checked::before{ transform: rotate(-45deg) scale(1); }
+    .consent input[type="checkbox"].invalid{ border-color:var(--brand-main); box-shadow:0 0 0 3px rgba(172,24,24,.18); }
+    .consent input[type="checkbox"]:disabled{ cursor:not-allowed; opacity:.6; }
+
+    .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+    .btn{ padding:10px 14px; border-radius:14px; cursor:pointer; font-weight:700; border:1px solid var(--brand-main); background:var(--brand-main); color:#fff; transition:background .15s, border-color .15s; }
+    .btn:hover{ background:var(--brand-alt); border-color:var(--brand-alt); }
+    .note{ font-size:12px; color:var(--brand-muted); margin-top:10px; }
+    .error{ color:var(--brand-main); font-size:12px; margin-top:4px; display:none; }
+
+    /* n8n mount */
+    #chat-container{ width:100%; height:100%; display:none; }
+    #n8n-chat{ width:100%; height:100%; }
+
+    /* Kill-switch na ewentualny welcome z n8n */
+    #n8n-chat [class*="welcome"],
+    #n8n-chat [data-test-id*="welcome"],
+    #n8n-chat [data-testid*="welcome"]{
+      display:none !important; height:0 !important; padding:0 !important; margin:0 !important; visibility:hidden !important; opacity:0 !important;
+    }
+
+/* ===== WYŚLIJ: tylko ikonka (tło zawsze przezroczyste) ===== */
+#n8n-chat .lex-send,
+#n8n-chat .lex-send:hover,
+#n8n-chat .lex-send.lex-active,
+#n8n-chat .lex-send.lex-active:hover{
+  background:#fff !important;            /* białe tło */
+  border:1px solid #fff !important;      /* brak szarej obwódki */
+  box-shadow:none !important;
+}
+
+
+/* szara ikonka gdy brak treści */
+#n8n-chat .lex-send:not(.lex-active) svg,
+#n8n-chat .lex-send:not(.lex-active) svg *{
+  fill:#9ca3af !important;
+  stroke:#9ca3af !important;
+  transition: fill .15s ease, stroke .15s ease;
+}
+
+/* czerwona ikonka gdy jest treść */
+#n8n-chat .lex-send.lex-active svg,
+#n8n-chat .lex-send.lex-active svg *{
+  fill: var(--brand-main) !important;
+  stroke: var(--brand-main) !important;
+}
+
+/* ciemnoczerwona na hover */
+#n8n-chat .lex-send.lex-active:hover svg,
+#n8n-chat .lex-send.lex-active:hover svg *{
+  fill: var(--brand-alt) !important;
+  stroke: var(--brand-alt) !important;
+}
+
+
+/* ===== SPINACZ: tylko ikonka (tło zawsze przezroczyste) ===== */
+#n8n-chat .lex-attach,
+#n8n-chat .lex-attach:hover{
+  background:#fff !important;           /* białe tło */
+  border:1px solid #fff !important;     /* brak szarej obwódki */
+  box-shadow:none !important;
+}
+
+
+/* czerwona ikonka spinacza */
+#n8n-chat .lex-attach svg,
+#n8n-chat .lex-attach svg *{
+  fill: var(--brand-main) !important;
+  stroke: var(--brand-main) !important;
+  transition: fill .15s ease, stroke .15s ease;
+}
+
+/* ciemnoczerwona na hover */
+#n8n-chat .lex-attach:hover svg,
+#n8n-chat .lex-attach:hover svg *{
+  fill: var(--brand-alt) !important;
+  stroke: var(--brand-alt) !important;
+}
+
+/* ===== Załączniki (CHIP): czerwone pigułki z białą ikoną/nazwą/X ===== */
+#n8n-chat .lex-file{
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 12px !important;
+  border-radius: 9999px !important;         /* pełne zaokrąglenie */
+  background: var(--brand-main) !important; /* czerwone tło */
+  border: none !important;                  /* zero obwódek */
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+
+/* biały tekst/nazwa pliku i linki w chipie */
+#n8n-chat .lex-file,
+#n8n-chat .lex-file a,
+#n8n-chat .lex-file span,
+#n8n-chat .lex-file div{
+  color:#fff !important;
+  font-size:14px !important;
+  font-weight:600 !important;
+  line-height:1.1 !important;
+}
+
+#n8n-chat .lex-file:hover{
+  background: var(--brand-alt) !important;  /* ciemnoczerwony na hover */
+}
+
+/* biała ikonka pliku w chipie */
+#n8n-chat .lex-file svg,
+#n8n-chat .lex-file svg *{
+  fill:#fff !important;
+  stroke:#fff !important;
+}
+
+/* Przycisk X (usuń) – biała ikona, okrągły hover w ciemnej czerwieni */
+#n8n-chat .lex-file .lex-file-remove{
+  width:22px !important;
+  height:22px !important;
+  display:inline-grid !important;
+  place-items:center !important;
+  border-radius:50% !important;             /* okrągły hover */
+  background:transparent !important;
+  border:none !important;
+  margin-left:4px !important;
+  cursor:pointer !important;
+}
+
+#n8n-chat .lex-file .lex-file-remove:hover{
+  background: var(--brand-alt) !important;   /* ciemnoczerwony bubble pod X */
+}
+
+#n8n-chat .lex-file .lex-file-remove svg,
+#n8n-chat .lex-file .lex-file-remove svg *{
+  fill:#fff !important;
+  stroke:#fff !important;
+}
+
+    @media (max-height:750px){ #chat-modal{ height:80vh; } }
+  </style>
+</head>
+<body>
+
+  <!-- Launcher – biały dymek na czerwonym tle -->
+<button id="chat-launcher" aria-label="Otwórz czat">
+  <svg viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round"
+      d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+  </svg>
+</button>
+
+
+  <!-- Okno czatu -->
+  <section id="chat-modal" role="dialog" aria-modal="true" aria-labelledby="chat-title">
+    <header id="chat-header">
+      <div id="brand-wrap">
+        <div class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="7" width="18" height="12" rx="6" ry="6" stroke="#fff" stroke-width="2"/>
+            <circle cx="9" cy="13" r="1.5" fill="#fff"/>
+            <circle cx="15" cy="13" r="1.5" fill="#fff"/>
+            <rect x="10.5" y="4" width="3" height="3" rx="1.5" fill="#fff"/>
+          </svg>
+        </div>
+        <div class="meta">
+          <div class="bot-name">Lex Bot</div>
+          <div class="bot-sub"><span class="online-dot"></span> Asystent AI</div>
+        </div>
+      </div>
+      <!-- MINIMALIZACJA (chevron w dół) -->
+      <button id="chat-minimize" aria-label="Zminimalizuj czat">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M6 9l6 6 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <div id="chat-body">
+      <!-- Pre-chat -->
+      <form id="prechat-form" novalidate>
+        <p class="topnote">Zanim zaczniemy, potrzebujemy kilku danych.</p>
+
+        <div class="field">
+          <label for="fullName">Imię i nazwisko*</label>
+          <input id="fullName" name="fullName" type="text" required placeholder="Jan Kowalski" />
+          <div id="err-fullName" class="error">Podaj imię i nazwisko, by rozpocząć czat.</div>
+        </div>
+
+        <div class="field">
+          <label for="email">Adres e-mail*</label>
+          <input id="email" name="email" type="email" required placeholder="jan.kowalski@example.com" />
+          <div id="err-email" class="error">Podaj poprawny e-mail, by rozpocząć czat.</div>
+        </div>
+
+        <div class="field">
+          <label for="phone">Nr telefonu*</label>
+          <input id="phone" name="phone" type="tel" required placeholder="+48 600 000 000" />
+          <div id="err-phone" class="error">Podaj poprawny numer telefonu, by rozpocząć czat.</div>
+        </div>
+
+        <div class="field">
+          <label for="city">Miasto (opcjonalnie)</label>
+          <input id="city" name="city" type="text" placeholder="Kraków" />
+        </div>
+
+        <div class="consent">
+          <input id="consent" name="consent" type="checkbox" required />
+          <label for="consent">Wyrażam zgodę na przetwarzanie danych osobowych w celu realizacji rozmowy i kontaktu zwrotnego. <a href="/polityka-prywatnosci" target="_blank" rel="noopener">Polityka prywatności</a>.</label>
+        </div>
+        <div id="err-consent" class="error" style="margin-top:6px;">Wyraź zgodę, by rozpocząć czat.</div>
+
+        <div class="actions">
+          <button type="submit" class="btn">Rozpocznij czat</button>
+        </div>
+
+        <p class="note">Pola oznaczone * są wymagane.</p>
+      </form>
+
+      <!-- n8n Chat -->
+      <div id="chat-container">
+        <div id="n8n-chat"></div>
+      </div>
+    </div>
+  </section>
+
+  <script type="module">
+    import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+    /* === KONFIG === */
+    const WEBHOOK = 'https://primary-production-9b65d.up.railway.app/webhook/54872652-f844-4927-9804-91a177f09f38/chat';
+    const TTL_MS = 60 * 60 * 1000; // 1 godz.
+    const STORAGE = { DATA:'prechatDataV1', LAST:'prechatLastActiveAt', ALIVE:'sessionAlive' };
+
+    /* === UI refs === */
+    const launcher = document.getElementById('chat-launcher');
+    const modal    = document.getElementById('chat-modal');
+    const minimize = document.getElementById('chat-minimize');
+    const preForm  = document.getElementById('prechat-form');
+    const chatWrap = document.getElementById('chat-container');
+
+    /* === Stan: uruchomiono chat widget? === */
+    let chatBooted = false;
+
+    /* === Helpers: activity & storage === */
+    const now = () => Date.now();
+    const markActivity = () => localStorage.setItem(STORAGE.LAST, String(now()));
+    const loadSaved = () => { try { return JSON.parse(localStorage.getItem(STORAGE.DATA) || 'null'); } catch { return null; } };
+    const saveData  = (d) => { localStorage.setItem(STORAGE.DATA, JSON.stringify(d)); markActivity(); };
+    function clearSession(){ localStorage.removeItem(STORAGE.DATA); localStorage.removeItem(STORAGE.LAST); }
+    const inactivityExpired = () => { const last = Number(localStorage.getItem(STORAGE.LAST) || '0'); return !last || (now() - last) > TTL_MS; };
+    function ensureBrowserSession(){ if (!sessionStorage.getItem(STORAGE.ALIVE)) { sessionStorage.setItem(STORAGE.ALIVE,'1'); clearSession(); } }
+    function maybeResetByTTL(){ if (inactivityExpired()) clearSession(); }
+    setInterval(maybeResetByTTL, 60*1000);
+
+    /* Walidacja */
+    function showError(id, on, text){ const el=document.getElementById(id); if(!el) return; if(text) el.textContent=text; el.style.display=on?'block':'none'; }
+    function validateData(d){
+      const errs=[];
+      const emailOk=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email||'');
+      const phoneOk=/^[0-9 +()\-]{7,20}$/.test(d.phone||'');
+      const nameOk=Boolean((d.fullName||'').trim());
+      const consentOk=d.consent===true;
+
+      const box = document.getElementById('consent');
+      if (box) box.classList.toggle('invalid', !consentOk);
+
+      showError('err-fullName',!nameOk,'Podaj imię i nazwisko, by rozpocząć czat.'); if(!nameOk) errs.push('name');
+      showError('err-email',!emailOk,'Podaj poprawny e-mail, by rozpocząć czat.');     if(!emailOk) errs.push('email');
+      showError('err-phone',!phoneOk,'Podaj poprawny numer telefonu, by rozpocząć czat.'); if(!phoneOk) errs.push('phone');
+      showError('err-consent',!consentOk,'Wyraź zgodę, by rozpocząć czat.'); if(!consentOk) errs.push('consent');
+      return errs;
+    }
+    function readForm(form){
+      const get=(id)=>form.querySelector('#'+id)?.value?.trim()||'';
+      return { fullName:get('fullName'), email:get('email'), phone:get('phone'), city:get('city')||null, consent: form.querySelector('#consent')?.checked===true };
+    }
+    const isValid=(d)=>validateData(d).length===0;
+
+    /* (awaryjnie) ukryj welcome z n8n */
+    function suppressWelcome(){
+      const root=document.getElementById('n8n-chat');
+      if(!root) return;
+      const wipe=()=>{
+        root.querySelectorAll('[data-testid*="welcome"],[data-test-id*="welcome"],[class*="welcome"]').forEach(el=>el.remove());
+        root.querySelectorAll('h1,h2,p,div,section').forEach(el=>{
+          const t=(el.textContent||'').trim().toLowerCase();
+          if(t.startsWith('hi there') || t.includes('start a chat')) (el.closest('section,div')||el).remove();
+        });
+      };
+      wipe();
+      new MutationObserver(wipe).observe(root,{childList:true,subtree:true});
+    }
+
+    /* Kolorowanie przycisku wysłania: zakładamy klasę na przycisku i przełączamy stan */
+
+
+/* Kolorowanie kontrolek: spinacz (stałe czerwone) + wysyłka (szary → czerwony po treści)
+   + poprawka po wysłaniu (przycisk wraca na szaro) i rehook po re-renderze n8n */
+function wireControlsColor() {
+  const root = document.getElementById('n8n-chat');
+  if (!root) return;
+
+  const hook = () => {
+    const input = root.querySelector('textarea, input[type="text"]');
+    if (!input) return false;
+
+    const container = input.closest('form,div,section');
+    if (!container) return false;
+
+    const buttons = Array.from(container.querySelectorAll('button')).filter(b => b.querySelector('svg'));
+    if (buttons.length === 0) return false;
+
+    // Założenie: ostatni z ikoną = WYŚLIJ, inny = SPINACZ
+    const sendBtn   = buttons[buttons.length - 1];
+    const attachBtn = buttons.find(b => b !== sendBtn);
+
+    sendBtn.classList.add('lex-send');
+    if (attachBtn) attachBtn.classList.add('lex-attach');
+
+    const setState = () => {
+      const hasText = (input.value || '').trim().length > 0;
+      sendBtn.classList.toggle('lex-active', hasText);
+    };
+
+    // Aktualizacje w trakcie pisania
+    input.addEventListener('input', setState);
+    input.addEventListener('change', setState);
+    input.addEventListener('blur', setState);
+
+    // Po wysłaniu wiadomości n8n czyści pole asynchronicznie → przelicz stan po chwili
+    const afterSend = () => {
+      setTimeout(setState, 0);
+      setTimeout(setState, 60);
+      setTimeout(setState, 150);
+    };
+    sendBtn.addEventListener('click', afterSend, true);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) afterSend();
+    });
+
+    // Jeśli n8n podmieni input/przyciski w DOM → rehook
+    const ro = new MutationObserver(() => {
+      const iNow = root.querySelector('textarea, input[type="text"]');
+      const sNow = iNow?.closest('form,div,section')?.querySelector('button svg')?.closest('button');
+      if (iNow !== input || sNow !== sendBtn) {
+        ro.disconnect();
+        hook(); // podłącz ponownie do nowych elementów
+      } else {
+        // na wszelki wypadek utrzymuj poprawny stan
+        setState();
+      }
+    });
+    ro.observe(root, { childList: true, subtree: true });
+
+    setState(); // stan początkowy
+    return true;
+  };
+
+  // Pierwsze podpięcie (jeśli widget jeszcze się renderuje — poczekaj)
+  if (!hook()) {
+    const mo = new MutationObserver(() => { if (hook()) mo.disconnect(); });
+    mo.observe(root, { childList: true, subtree: true });
+  }
+}
+
+
+
+
+    /* Start n8n chat — TYLKO RAZ */
+    function bootChat(meta){
+      if (chatBooted) return; // nie inicjalizuj ponownie
+      chatBooted = true;
+      markActivity();
+
+      createChat({
+        webhookUrl: WEBHOOK,
+        target: '#n8n-chat',
+        mode: 'fullscreen',
+        loadPreviousSession: true,   // pozwala wczytać historię, jeśli pamięć w n8n jest spięta
+        enableStreaming: true,
+        showWelcomeScreen: false,
+	allowFileUploads: true,
+        // allowedFilesMimeTypes: '',
+        initialMessages: [
+          'Witaj! 😊',
+          'Jestem wirtualnym asystentem kancelarii. Jak mogę Ci pomóc?'
+        ],
+        metadata: {
+          ...meta,
+          page: window.location.href,
+          referrer: document.referrer || null,
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          lang: navigator.language || 'pl-PL',
+          formVersion: '1.7.0',
+          ts: new Date().toISOString(),
+        },
+        i18n: { en: { inputPlaceholder: 'Napisz wiadomość…', getStarted: 'Nowa rozmowa' } }
+      });
+
+     wireControlsColor();
+
+
+
+      const n8nRoot=document.getElementById('n8n-chat');
+      const activity=()=>markActivity();
+      n8nRoot.addEventListener('click',activity,true);
+      n8nRoot.addEventListener('keydown',activity,true);
+      suppressWelcome();
+    }
+
+    /* Init sesji (reset na restart/po 1h) */
+    ensureBrowserSession();
+    maybeResetByTTL();
+
+    /* Otwórz: pokaż modal; uruchom chat TYLKO jeśli jeszcze nie uruchomiony */
+    launcher.addEventListener('click', () => {
+      const isOpen = getComputedStyle(modal).display !== 'none';
+
+      // jeśli otwarte – zminimalizuj
+      if (isOpen) {
+        modal.style.display = 'none';
+        return;
+      }
+
+      // jeśli zamknięte – otwórz
+      modal.style.display = 'flex';
+      markActivity();
+
+      if (chatBooted) {
+        preForm.style.display = 'none';
+        chatWrap.style.display = 'block';
+        return;
+      }
+
+      const saved = loadSaved();
+      if (saved && isValid(saved) && !inactivityExpired()) {
+        preForm.style.display = 'none';
+        chatWrap.style.display = 'block';
+        bootChat(saved);
+      } else {
+        preForm.style.display = 'block';
+        chatWrap.style.display = 'none';
+      }
+    });
+
+
+    /* Minimalizacja (nie resetuje niczego) */
+    minimize.addEventListener('click', () => {
+      modal.style.display = 'none';
+      // stan czatu zostaje w DOM; przy kolejnym otwarciu tylko pokażemy modal
+    });
+
+    /* ESC też minimalizuje */
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.style.display !== 'none') {
+        modal.style.display = 'none';
+      }
+    });
+
+    /* Submit formularza => start czatu (tylko raz) */
+    preForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = readForm(preForm);
+      if (validateData(data).length) return;
+      saveData(data);
+      preForm.style.display = 'none';
+      chatWrap.style.display = 'block';
+      bootChat(data);
+    });
+
+    /* aktywność */
+    window.addEventListener('focus', markActivity);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) markActivity(); });
+  </script>
+</body>
+</html>
