@@ -354,43 +354,42 @@
     <div id="chat-body">
       <!-- Pre-chat -->
       <form id="prechat-form" novalidate>
-        <p class="topnote">Zanim zaczniemy, potrzebujemy kilku danych.</p>
+        <p class="topnote">Wersja testowa: Wprowadź dowolne dane lub zostaw puste.</p>
 
         <div class="field">
-          <label for="fullName">Imię i nazwisko*</label>
+          <label for="fullName">Imię i nazwisko</label>
           <input id="fullName" name="fullName" type="text" placeholder="Jan Kowalski" />
-          <div id="err-fullName" class="error">Podaj imię i nazwisko, by rozpocząć czat.</div>
+          <div id="err-fullName" class="error"></div>
         </div>
 
         <div class="field">
-          <label for="email">Adres e-mail*</label>
+          <label for="email">Adres e-mail</label>
           <input id="email" name="email" type="email" placeholder="jan.kowalski@example.com" />
-          <div id="err-email" class="error">Podaj poprawny e-mail, by rozpocząć czat.</div>
+          <div id="err-email" class="error"></div>
         </div>
 
         <div class="field">
-          <label for="phone">Nr telefonu*</label>
+          <label for="phone">Nr telefonu</label>
           <input id="phone" name="phone" type="tel" placeholder="+48 600 000 000" />
-          <div id="err-phone" class="error">Podaj poprawny numer telefonu, by rozpocząć czat.</div>
+          <div id="err-phone" class="error"></div>
         </div>
 
         <div class="field">
-          <label for="city">Miasto (opcjonalnie)</label>
+          <label for="city">Miasto</label>
           <input id="city" name="city" type="text" placeholder="Kraków" />
         </div>
 
         <div class="consent">
           <input id="consent" name="consent" type="checkbox" />
-          <label for="consent">Wyrażam zgodę na przetwarzanie danych osobowych w celu realizacji rozmowy i kontaktu zwrotnego. <a href="/polityka-prywatnosci" target="_blank" rel="noopener">Polityka prywatności</a>.</label>
+          <label for="consent">Zgoda na przetwarzanie danych osobowych w celu realizacji rozmowy i kontaktu zwrotnego. <a href="/polityka-prywatnosci" target="_blank" rel="noopener">Polityka prywatności</a>.</label>
         </div>
-        <div id="err-consent" class="error" style="margin-top:6px;">Wyraź zgodę, by rozpocząć czat.</div>
+        <div id="err-consent" class="error" style="margin-top:6px;"></div>
 
         <div class="actions">
-          <button type="submit" class="btn">Rozpocznij czat</button>
+          <button type="submit" class="btn">Rozpocznij czat (Test)</button>
         </div>
 
-        <p class="note">Pola oznaczone * są wymagane.</p>
-      </form>
+        </form>
 
       <!-- n8n Chat -->
       <div id="chat-container">
@@ -431,20 +430,16 @@
     /* Walidacja */
     function showError(id, on, text){ const el=document.getElementById(id); if(!el) return; if(text) el.textContent=text; el.style.display=on?'block':'none'; }
     function validateData(d){
-      const errs=[];
-      const emailOk=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email||'');
-      const phoneOk=/^[0-9 +()\-]{7,20}$/.test(d.phone||'');
-      const nameOk=Boolean((d.fullName||'').trim());
-      const consentOk=d.consent===true;
-
+      // Wersja testowa: walidacja jest zawsze pomyślna.
+      // Ukrywamy ewentualne komunikaty o błędach, które mogły pozostać widoczne.
+      showError('err-fullName', false);
+      showError('err-email', false);
+      showError('err-phone', false);
+      showError('err-consent', false);
       const box = document.getElementById('consent');
-      if (box) box.classList.toggle('invalid', !consentOk);
+      if (box) box.classList.remove('invalid');
 
-      showError('err-fullName',!nameOk,'Podaj imię i nazwisko, by rozpocząć czat.'); if(!nameOk) errs.push('name');
-      showError('err-email',!emailOk,'Podaj poprawny e-mail, by rozpocząć czat.');     if(!emailOk) errs.push('email');
-      showError('err-phone',!phoneOk,'Podaj poprawny numer telefonu, by rozpocząć czat.'); if(!phoneOk) errs.push('phone');
-      showError('err-consent',!consentOk,'Wyraź zgodę, by rozpocząć czat.'); if(!consentOk) errs.push('consent');
-      return errs;
+      return []; // Zawsze zwracaj pustą tablicę (brak błędów)
     }
     function readForm(form){
       const get=(id)=>form.querySelector('#'+id)?.value?.trim()||'';
@@ -650,4 +645,3 @@ function wireControlsColor() {
   </script>
 </body>
 </html>
-
