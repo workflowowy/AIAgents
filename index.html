@@ -550,8 +550,34 @@ function wireControlsColor() {
         loadPreviousSession: true,   // pozwala wczytać historię, jeśli pamięć w n8n jest spięta
         enableStreaming: true,
         showWelcomeScreen: false,
-	allowFileUploads: true,
-        // allowedFilesMimeTypes: '',
+		allowFileUploads: true,
+        allowedFilesMimeTypes: [
+        // PDF
+        'application/pdf',
+
+        // Obrazy
+        'image/*',
+
+        // Office / OpenOffice
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+        'application/vnd.oasis.opendocument.text', // .odt
+
+        // Inne tekstowe / publikacyjne
+        'application/epub+zip',               // .epub
+        'application/docbook+xml',            // DocBook XML
+        'application/rtf',                    // .rtf
+        'application/x-biblatex',
+        'application/x-bibtex',
+        'application/x-endnote+xml',
+        'application/x-fictionbook+xml',
+        'application/x-ipynb+json',           // .ipynb
+        'application/x-jats+xml',             // JATS XML
+        'application/x-latex',                // .tex
+        'application/x-opml+xml',             // .opml
+        'text/troff',                         // man pages
+        'text/x-dokuwiki'                     // DokuWiki
+    	],
         initialMessages: [
           'Witaj! 😊',
           'Jestem wirtualnym asystentem kancelarii. Jak mogę Ci pomóc?'
@@ -645,4 +671,5 @@ function wireControlsColor() {
   </script>
 </body>
 </html>
+
 
