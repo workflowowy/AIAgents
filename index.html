@@ -354,7 +354,6 @@
     <div id="chat-body">
       <!-- Pre-chat -->
       <form id="prechat-form" novalidate>
-        <p class="topnote">Wersja testowa: Wprowadź dowolne dane lub zostaw puste.</p>
 
         <div class="field">
           <label for="fullName">Imię i nazwisko</label>
@@ -375,7 +374,7 @@
         </div>
 
         <div class="field">
-          <label for="city">Miasto</label>
+          <label for="city">Miejscowość</label>
           <input id="city" name="city" type="text" placeholder="Kraków" />
         </div>
 
@@ -386,7 +385,7 @@
         <div id="err-consent" class="error" style="margin-top:6px;"></div>
 
         <div class="actions">
-          <button type="submit" class="btn">Rozpocznij czat (Test)</button>
+          <button type="submit" class="btn">Rozpocznij czat</button>
         </div>
 
         </form>
@@ -429,18 +428,48 @@
 
     /* Walidacja */
     function showError(id, on, text){ const el=document.getElementById(id); if(!el) return; if(text) el.textContent=text; el.style.display=on?'block':'none'; }
-    function validateData(d){
-      // Wersja testowa: walidacja jest zawsze pomyślna.
-      // Ukrywamy ewentualne komunikaty o błędach, które mogły pozostać widoczne.
-      showError('err-fullName', false);
-      showError('err-email', false);
-      showError('err-phone', false);
-      showError('err-consent', false);
-      const box = document.getElementById('consent');
-      if (box) box.classList.remove('invalid');
+   function validateData(d){
+      const errors = []; // Lista błędów
 
-      return []; // Zawsze zwracaj pustą tablicę (brak błędów)
-    }
+      // 1. Zresetuj wszystkie błędy przed nową walidacją
+      showError('err-fullName', false);
+      showError('err-email', false);
+      showError('err-phone', false);
+      showError('err-consent', false);
+      const box = document.getElementById('consent');
+      if (box) box.classList.remove('invalid');
+
+      // 2. Walidacja: Imię i nazwisko (min 2 znaki)
+      if (!d.fullName || d.fullName.trim().length < 2) {
+        errors.push('fullName');
+        showError('err-fullName', true, 'Proszę podać imię i nazwisko.');
+      }
+
+      // 3. Walidacja: E-mail (prosty regex)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!d.email || !emailRegex.test(d.email)) {
+        errors.push('email');
+        showError('err-email', true, 'Proszę podać poprawny adres e-mail.');
+      }
+
+      // 4. Walidacja: Telefon (min. 9 cyfr po usunięciu spacji/znaków)
+      const phoneDigits = (d.phone || '').replace(/[\s+()-]/g, '');
+      if (phoneDigits.length < 9) {
+        errors.push('phone');
+        showError('err-phone', true, 'Proszę podać poprawny numer telefonu (min. 9 cyfr).');
+      }
+
+      // 5. Walidacja: Zgoda
+      if (!d.consent) {
+        errors.push('consent');
+        showError('err-consent', true, 'Zgoda na przetwarzanie danych jest wymagana.');
+        if (box) box.classList.add('invalid'); // Dodaj czerwoną ramkę do checkboxa
+      }
+
+      // Zwróć tablicę błędów. Jeśli jest pusta (długość 0), formularz jest ważny.
+      return errors;
+    }
+	  
     function readForm(form){
       const get=(id)=>form.querySelector('#'+id)?.value?.trim()||'';
       return { fullName:get('fullName'), email:get('email'), phone:get('phone'), city:get('city')||null, consent: form.querySelector('#consent')?.checked===true };
@@ -671,5 +700,6 @@ function wireControlsColor() {
   </script>
 </body>
 </html>
+
 
 
