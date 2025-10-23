@@ -422,7 +422,7 @@
     const saveData  = (d) => { localStorage.setItem(STORAGE.DATA, JSON.stringify(d)); markActivity(); };
     function clearSession(){ localStorage.removeItem(STORAGE.DATA); localStorage.removeItem(STORAGE.LAST); }
     const inactivityExpired = () => { const last = Number(localStorage.getItem(STORAGE.LAST) || '0'); return !last || (now() - last) > TTL_MS; };
-    function ensureBrowserSession(){ if (!sessionStorage.getItem(STORAGE.ALIVE)) { sessionStorage.setItem(STORAGE.ALIVE,'1'); clearSession(); } }
+    function ensureBrowserSession(){ if (!sessionStorage.getItem(STORAGE.ALIVE)) { sessionStorage.setItem(STORAGE.ALIVE,'1'); } }
     function maybeResetByTTL(){ if (inactivityExpired()) clearSession(); }
     setInterval(maybeResetByTTL, 60*1000);
 
@@ -700,6 +700,7 @@ function wireControlsColor() {
   </script>
 </body>
 </html>
+
 
 
 
