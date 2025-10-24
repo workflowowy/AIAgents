@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Lex Bot</title>
 
-  <!-- Poppins (UI, wiadomości, formularz) + fallback Montserrat -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&family=Montserrat:wght@400;500&display=swap" rel="stylesheet">
-  <!-- n8n chat CSS -->
   <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
 
   <style>
@@ -90,12 +88,12 @@
       display:flex; align-items:center; justify-content:space-between;
     }
     #brand-wrap{ display:flex; align-items:center; gap:10px; min-width:0; }
-    .avatar{ width:36px; height:36px; border-radius:50%; background:#fff1; display:grid; place-items:center; border:2px solid #ffffff66; }
-    .avatar svg{ width:22px; height:22px; display:block; }
-    .meta{ display:flex; flex-direction:column; line-height:1.1; }
-    .bot-name{ font-family:"Segoe UI","Segoe UI Variable","Segoe UI Web",system-ui,-apple-system,Roboto,Arial,sans-serif; font-weight:700; font-size:16px; letter-spacing:.2px; }
-    .bot-sub{ font-family:"Segoe UI","Segoe UI Variable","Segoe UI Web",system-ui,-apple-system,Roboto,Arial,sans-serif; font-weight:400; font-size:12px; opacity:.95; display:flex; align-items:center; gap:6px; }
-    .online-dot{ width:10px; height:10px; border-radius:50%; background:#2ecc71; box-shadow:0 0 0 2px #ffffff55 inset; }
+    #chat-header .avatar{ width:36px; height:36px; border-radius:50%; background:#fff1; display:grid; place-items:center; border:2px solid #ffffff66; }
+    #chat-header .avatar svg{ width:22px; height:22px; display:block; }
+    #chat-header .meta{ display:flex; flex-direction:column; line-height:1.1; }
+    #chat-header .bot-name{ font-family:"Segoe UI","Segoe UI Variable","Segoe UI Web",system-ui,-apple-system,Roboto,Arial,sans-serif; font-weight:700; font-size:16px; letter-spacing:.2px; }
+    #chat-header .bot-sub{ font-family:"Segoe UI","Segoe UI Variable","Segoe UI Web",system-ui,-apple-system,Roboto,Arial,sans-serif; font-weight:400; font-size:12px; opacity:.95; display:flex; align-items:center; gap:6px; }
+    #chat-header .online-dot{ width:10px; height:10px; border-radius:50%; background:#2ecc71; box-shadow:0 0 0 2px #ffffff55 inset; }
 
     /* Strzałka minimalizacji: jednolite, pełne kółko na hover/focus — bez obwódki */
     #chat-minimize{
@@ -134,25 +132,25 @@
 
     /* Formularz wstępny */
     #prechat-form{ width:100%; height:100%; padding:16px; overflow:auto; }
-    #prechat-form p.topnote{ margin:0 0 8px; font-size:13px; color:var(--brand-muted); }
-    .field{ margin-bottom:12px; }
-    .field label{ display:block; font-size:13px; margin-bottom:6px; color:#111; }
-    .field input[type="text"],
-    .field input[type="email"],
-    .field input[type="tel"]{
+    form#prechat-form p.topnote{ margin:0 0 8px; font-size:13px; color:var(--brand-muted); }
+    form#prechat-form .field{ margin-bottom:12px; }
+    form#prechat-form .field label{ display:block; font-size:13px; margin-bottom:6px; color:#111; }
+    form#prechat-form .field input[type="text"],
+    form#prechat-form .field input[type="email"],
+    form#prechat-form .field input[type="tel"]{
       width:100%; max-width:100%; height:44px; padding:10px 12px;
       border:1.5px solid var(--brand-border); border-radius:14px;
       font-size:14px; background:#fff; color:var(--brand-text);
       outline:none; transition:border-color .15s, box-shadow .15s;
     }
-    .field input::placeholder{ color:#9ca3af; }
-    .field input:focus{ border-color:var(--brand-main); box-shadow:0 0 0 3px color-mix(in srgb, var(--brand-main) 22%, transparent); }
+    form#prechat-form .field input::placeholder{ color:#9ca3af; }
+    form#prechat-form .field input:focus{ border-color:var(--brand-main); box-shadow:0 0 0 3px color-mix(in srgb, var(--brand-main) 22%, transparent); }
 
     /* Checkbox – kwadrat 20x20, nieprzycinany, animowany */
-    .consent { display:flex; gap:12px; align-items:flex-start; font-size:13px; color:#333; }
-    .consent a { color: var(--brand-accent); text-decoration: underline; }
+    form#prechat-form .consent { display:flex; gap:12px; align-items:flex-start; font-size:13px; color:#333; }
+    form#prechat-form .consent a { color: var(--brand-accent); text-decoration: underline; }
 
-    .consent input[type="checkbox"]{
+    form#prechat-form .consent input[type="checkbox"]{
       appearance: none; -webkit-appearance: none;
       width: 18px; height: 18px;
       flex: 0 0 20px; min-width:20px; min-height:20px;
@@ -165,24 +163,24 @@
       transition: border-color .2s, background-color .2s, box-shadow .2s, transform .08s;
       margin-top: 2px; padding: 0; line-height: 0;
     }
-    .consent input[type="checkbox"]::before{
+    form#prechat-form .consent input[type="checkbox"]::before{
       content: ""; width:12px; height:7px;
       border-left:3px solid #fff; border-bottom:3px solid #fff;
       transform: rotate(-45deg) scale(0); transform-origin:center;
       transition: transform .16s ease-in-out;
     }
-    .consent input[type="checkbox"]:hover { border-color: var(--brand-main); }
-    .consent input[type="checkbox"]:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(172,24,24,.18); border-color:var(--brand-main); }
-    .consent input[type="checkbox"]:checked{ background:var(--brand-main); border-color:var(--brand-main); }
-    .consent input[type="checkbox"]:checked::before{ transform: rotate(-45deg) scale(1); }
-    .consent input[type="checkbox"].invalid{ border-color:var(--brand-main); box-shadow:0 0 0 3px rgba(172,24,24,.18); }
-    .consent input[type="checkbox"]:disabled{ cursor:not-allowed; opacity:.6; }
+    form#prechat-form .consent input[type="checkbox"]:hover { border-color: var(--brand-main); }
+    form#prechat-form .consent input[type="checkbox"]:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(172,24,24,.18); border-color:var(--brand-main); }
+    form#prechat-form .consent input[type="checkbox"]:checked{ background:var(--brand-main); border-color:var(--brand-main); }
+    form#prechat-form .consent input[type="checkbox"]:checked::before{ transform: rotate(-45deg) scale(1); }
+    form#prechat-form .consent input[type="checkbox"].invalid{ border-color:var(--brand-main); box-shadow:0 0 0 3px rgba(172,24,24,.18); }
+    form#prechat-form .consent input[type="checkbox"]:disabled{ cursor:not-allowed; opacity:.6; }
 
-    .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-    .btn{ padding:10px 14px; border-radius:14px; cursor:pointer; font-weight:700; border:1px solid var(--brand-main); background:var(--brand-main); color:#fff; transition:background .15s, border-color .15s; }
-    .btn:hover{ background:var(--brand-alt); border-color:var(--brand-alt); }
-    .note{ font-size:12px; color:var(--brand-muted); margin-top:10px; }
-    .error{ color:var(--brand-main); font-size:12px; margin-top:4px; display:none; }
+    form#prechat-form .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+    form#prechat-form .btn{ padding:10px 14px; border-radius:14px; cursor:pointer; font-weight:700; border:1px solid var(--brand-main); background:var(--brand-main); color:#fff; transition:background .15s, border-color .15s; }
+    form#prechat-form .btn:hover{ background:var(--brand-alt); border-color:var(--brand-alt); }
+    form#prechat-form .note{ font-size:12px; color:var(--brand-muted); margin-top:10px; }
+    form#prechat-form .error{ color:var(--brand-main); font-size:12px; margin-top:4px; display:none; }
 
     /* n8n mount */
     #chat-container{ width:100%; height:100%; display:none; }
@@ -247,7 +245,7 @@
 }
 
 /* ciemnoczerwona na hover */
-#n8n-chat .lex-attach:hover svg,
+#n88n-chat .lex-attach:hover svg,
 #n8n-chat .lex-attach:hover svg *{
   fill: var(--brand-alt) !important;
   stroke: var(--brand-alt) !important;
@@ -316,8 +314,7 @@
 </head>
 <body>
 
-  <!-- Launcher – biały dymek na czerwonym tle -->
-<button id="chat-launcher" aria-label="Otwórz czat">
+  <button id="chat-launcher" aria-label="Otwórz czat">
   <svg viewBox="0 0 24 24" fill="none"
        stroke="currentColor" stroke-width="1.8" aria-hidden="true">
     <path stroke-linecap="round" stroke-linejoin="round"
@@ -326,7 +323,6 @@
 </button>
 
 
-  <!-- Okno czatu -->
   <section id="chat-modal" role="dialog" aria-modal="true" aria-labelledby="chat-title">
     <header id="chat-header">
       <div id="brand-wrap">
@@ -343,7 +339,6 @@
           <div class="bot-sub"><span class="online-dot"></span> Asystent AI</div>
         </div>
       </div>
-      <!-- MINIMALIZACJA (chevron w dół) -->
       <button id="chat-minimize" aria-label="Zminimalizuj czat">
         <svg viewBox="0 0 24 24" fill="none">
           <path d="M6 9l6 6 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -352,7 +347,6 @@
     </header>
 
     <div id="chat-body">
-      <!-- Pre-chat -->
       <form id="prechat-form" novalidate>
 
         <div class="field">
@@ -390,7 +384,6 @@
 
         </form>
 
-      <!-- n8n Chat -->
       <div id="chat-container">
         <div id="n8n-chat"></div>
       </div>
@@ -700,8 +693,3 @@ function wireControlsColor() {
   </script>
 </body>
 </html>
-
-
-
-
-
